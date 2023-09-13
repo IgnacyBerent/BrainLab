@@ -1,4 +1,4 @@
-import pandas
+import pandas as pd
 import numpy as np
 import datetime
 import xlrd
@@ -42,12 +42,12 @@ def fill_missing_steps(df):
             diff -= 1
 
     rows.append(df.iloc[-1].to_dict())
-    new_data = pandas.DataFrame(rows)
+    new_data = pd.DataFrame(rows)
     return new_data
 
 
 def read_data(data):
-    df = pandas.read_csv(data, sep=';')
+    df = pd.read_csv(data, sep=';')
     try:
         df = df[['DateTime', 'abp[mmHg]']]
     except KeyError:
@@ -58,5 +58,6 @@ def read_data(data):
     df['DateTime'] = [icmp_dateformat_to_datetime(date) for date in df['DateTime']]
     df['DateTime'] = [timestamp_diff(date, df['DateTime'][0]) for date in df['DateTime']]
     df.rename(columns = {'DateTime': "TimeSteps"}, inplace = True)
+    df['TimeSteps'] = df['TimeSteps'].astype(int)
     df = fill_missing_steps(df)
     return df

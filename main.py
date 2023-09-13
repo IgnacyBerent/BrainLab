@@ -1,11 +1,12 @@
-from prsa import *
-from prep import *
+import prsa
+import prsa
+import prep
 import matplotlib.pyplot as plt
 
+
 def main():
-    data = read_data('r2.csv')
-    data = make_phase_column(data)
-    prsa_signal = prsa(data, 1)
+    df = prep.read_data('r2.csv')
+    prsa.plot(prsa.calc_optimized(df, 300))
 
 
 if __name__ == '__main__':
