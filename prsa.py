@@ -13,7 +13,7 @@ def calc(df: pd.DataFrame, L: int) -> np.array:
     """
 
     x = df['abp[mmHg]'].to_numpy()
-    indexs = np.arange(len(x))
+    indexs = df['TimeSteps'].to_numpy()
 
     # wybieram punkty kotwicze według zależności X_i > X_i-1,
     # nie zaliczam punktów kotwiczych dla których okno wyszłoby poza zakres wartości
@@ -45,10 +45,12 @@ def calc_optimized(df: pd.DataFrame, L: int) -> np.array:
     """
 
     x = df['abp[mmHg]'].to_numpy()
+    indexs = np.arange(len(x))
 
-    # wybieram punkty kotwicze według zależności X_i > X_i-1,
+    # wybieram punkty kotwicze 'i' według zależności X_i > X_i-1,
     # nie zaliczam punktów kotwiczych dla których okno wyszłoby poza zakres wartości
-    anchor_points = np.where(x[1:-L] > x[:-L - 1])[0] + 1
+    anchor_list = [i for i in indexs[L:-L] if x[i] > x[i - 1]]
+    anchor_points = np.array(anchor_list)
 
     # obliczam średnie od k
     X_k = []
@@ -61,25 +63,16 @@ def calc_optimized(df: pd.DataFrame, L: int) -> np.array:
 
 def plot(prsa_values: np.array):
 
-    x = np.arange(len(prsa_values))
+    x = np.arange(start=-len(prsa_values)//2, stop=len(prsa_values)//2)
 
     # Ustawienie ośi y jako wartości z prsa_values
     y = prsa_values
 
-    # Usunięcie wartości NaN i Inf przed obliczaniem min i max
-    valid_values = prsa_values[~np.isnan(prsa_values) & ~np.isinf(prsa_values)]
-
-    # Jeśli wszystkie wartości są NaN lub Inf, zwróć bez rysowania wykresu
-    if len(valid_values) == 0:
-        print("Brak poprawnych wartości do wyrysowania wykresu.")
-        return
-
     # Ustal długość zapasu na osi y (10% z dołu i góry)
-    y_min = np.min(valid_values) * 0.9
-    y_max = np.max(valid_values) * 1.1
+    y_min = np.min(y) * 0.9
+    y_max = np.max(y) * 1.1
 
     # Ustawienie limitów osi x i y
-    plt.xlim(0, len(prsa_values))
     plt.ylim(y_min, y_max)
 
     # Tworzenie wykresu scatter
@@ -94,6 +87,8 @@ def plot(prsa_values: np.array):
 
     # Wyświetlenie wykresu
     plt.show()
+
+
 
 
 
