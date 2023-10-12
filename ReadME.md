@@ -1,1 +1,1 @@
-* Przeanalizować na mniejszych wartościach możliwe korelacje między zbiorami danych
+
