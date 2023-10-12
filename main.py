@@ -1,12 +1,11 @@
 import prsa
-import prsa
 import prep
-import matplotlib.pyplot as plt
+
 
 def main():
     df = prep.read_data('data/r2.csv')
-    df = prep.find_longest_segment(df)
-    prsa_result = prsa.calc_optimized(df, 300)
+    df = prep.find_longest_segments(df)
+    prsa_result = prsa.calculate(df[0], 300)
     prsa.plot(prsa_result)
 
 

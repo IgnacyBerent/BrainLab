@@ -1,10 +1,9 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import time
 
 
-def calc_optimized(df: pd.DataFrame, L: int) -> np.array:
+def calculate(df: pd.DataFrame, L: int) -> np.array:
     """
     Oblicza prsa według punktu 2 z https://www.sciencedirect.com/science/article/pii/S037843710501006X
     :param df: dane sygnału abp[mmHg]
@@ -55,11 +54,3 @@ def plot(prsa_values: np.array):
 
     # Wyświetlenie wykresu
     plt.show()
-
-
-
-
-
-
-
-

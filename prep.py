@@ -3,6 +3,7 @@ import numpy as np
 import datetime
 import xlrd
 
+
 def icmp_dateformat_to_datetime(icmp_time_mark):
     datetime_date = xlrd.xldate_as_datetime(icmp_time_mark, 0)
     datetime_date = datetime_date + datetime.timedelta(hours=1)
@@ -57,50 +58,43 @@ def read_data(data):
     df = df.apply(lambda x: [float(num) for num in x])
     df['DateTime'] = [icmp_dateformat_to_datetime(date) for date in df['DateTime']]
     df['DateTime'] = [timestamp_diff(date, df['DateTime'][0]) for date in df['DateTime']]
-    df.rename(columns = {'DateTime': "TimeSteps"}, inplace = True)
+    df.rename(columns={'DateTime': "TimeSteps"}, inplace=True)
     df = fill_missing_steps(df)
     df['TimeSteps'] = df['TimeSteps'].astype(int)
     return df
 
 
-def find_longest_segment(df: pd.DataFrame) -> pd.DataFrame:
-    max_len = 0
-    current_len = 0
-    nan_count = 0
-
+def find_longest_segments(df: pd.DataFrame, n: int = 1) -> list:
+    sequences = []
     current_sequence = []
-    longest_sequence = []
 
     for val in df['abp[mmHg]']:
-        if not pd.isna(val):
-            current_len += 1
-            nan_count = 0
-            current_sequence.append(val)
-        elif pd.isna(val) and nan_count == 0:
-            current_len += 1
-            nan_count += 1
+        if not pd.isna(val) or (pd.isna(val) and (not current_sequence or not pd.isna(current_sequence[-1]))):
             current_sequence.append(val)
         else:
-            if current_len > max_len:
-                max_len = current_len
-                longest_sequence = current_sequence.copy()
-            current_len = 0
-            nan_count = 0
+            sequences.append(current_sequence.copy())
             current_sequence = []
 
-    if current_len > max_len:
-        longest_sequence = current_sequence.copy()
+    if current_sequence:
+        sequences.append(current_sequence)
 
-    data = {'abp[mmHg]': longest_sequence}
-    result = pd.DataFrame(data)
+    sequences = sorted(sequences, key=lambda x: len(x), reverse=True)
 
-    # Jeśli NaN występuje na początku lub końcu najdłuższego odcinka, usuń odpowiednie wiersze
-    if pd.isna(result['abp[mmHg]'].iloc[0]):
-        result = result.iloc[1:]
-    if pd.isna(result['abp[mmHg]'].iloc[-1]):
-        result = result.iloc[:-1]
+    results = []
 
-    # Uzupełnij wartości NaN poprzez interpolację
-    result['abp[mmHg]'] = result['abp[mmHg]'].interpolate()
+    for seq in sequences[:n]:
+        data = {'abp[mmHg]': seq}
+        temp_df = pd.DataFrame(data)
 
-    return result
+        # Jeśli NaN występuje na początku lub końcu najdłuższego odcinka, usuń odpowiednie wiersze
+        if pd.isna(temp_df['abp[mmHg]'].iloc[0]):
+            temp_df = temp_df.iloc[1:]
+        if pd.isna(temp_df['abp[mmHg]'].iloc[-1]):
+            temp_df = temp_df.iloc[:-1]
+
+        # Uzupełnij wartości NaN poprzez interpolację
+        temp_df['abp[mmHg]'] = temp_df['abp[mmHg]'].interpolate()
+
+        results.append(temp_df)
+
+    return results
