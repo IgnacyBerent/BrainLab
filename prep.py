@@ -217,4 +217,23 @@ def describe_segment(signal: np.array, time_interval: Tuple[str, str]):
     """
     print(f'Segment size: {len(signal)}')
     print(f'Segment length: {format_time(seconds=len(signal) * 0.005)} min')
-    print(f'Segment interval: {time_interval[0]} min - {time_interval[1]} min')
+    print(f'Segment interval: {time_interval[0]} min - {time_interval[1]} min \n')
+
+def files_time_analysis(files: list[pd.DataFrame]):
+    """
+    Prints information about mean and std of files time duration.
+    :param files: list of Data Frames with column names 'TimeSteps' and 'Values'
+    """
+
+    files_time = np.array([len(file) for file in files]) * 0.005
+    mean_time = np.mean(files_time)
+    std_time = np.std(files_time)
+    print(f'File time duration: ({format_time(mean_time)} ± {format_time(std_time)}) min')
+    print(f'Shortest file time duration: {format_time(np.min(files_time))} min')
+    print(f'Longest file time duration: {format_time(np.max(files_time))} min')
+
+
+
+    
+
+    
