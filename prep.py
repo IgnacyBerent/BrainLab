@@ -61,26 +61,32 @@ def fill_missing_steps(df: pd.DataFrame,) -> pd.DataFrame:
     return new_data
 
 
-def read_data(data: str, signal_name: str) -> pd.DataFrame:
+def read_data(data: str, signal_name: str, sep: str = ',') -> pd.DataFrame:
     """
     Reads csv data from icm+ program and adjusts it for later use.
     It reads only columns called: DateTime and 'signal_name'
-    It expects that data in csv file is separated by ';' and float numbers are defined using coma instead of dot.
+    It expects that data in csv file is separated by ',' and float numbers are defined using coma instead of dot.
     It changes icm+ date format column into 'TimeSteps', where ich step means 5ms gap
     It also fills the missing steps with None values.
     :param data: measurements performed using icm+ program
     :param signal_name: column name of signal values
+    :param sep: separator in csv file, default ','
     :return: adjusted Data Frame for further operations, with column names 'TimeSteps' and 'Values',
              where time steps are 5ms steps between signal values.
     """
 
-    df = pd.read_csv(data, sep=';')
+    df = pd.read_csv(data, sep=',')
     try:
         df = df[['DateTime', signal_name]]
     except KeyError:
         print('Wrong columns names!')
 
-    df = df.apply(lambda x: x.str.replace(',', '.'))
+    if sep != ',':
+        try:
+            df = df.apply(lambda x: x.str.replace(',', '.'))
+        except AttributeError:
+            pass
+    
     df = df.apply(lambda x: [float(num) for num in x])
     df['DateTime'] = [icmp_dateformat_to_datetime(date) for date in df['DateTime']]
     df['DateTime'] = [timestamp_diff(date, df['DateTime'][0]) for date in df['DateTime']]
