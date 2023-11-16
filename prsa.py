@@ -78,7 +78,7 @@ def get_rr_intervals(signal_df: pd.DataFrame, height: float | int, distance: int
     peaks_time = signal_df["TimeSteps"].iloc[peaks_indexs].to_numpy() * 0.005
     # calculates intervals between peaks
     rr_intervals = np.diff(peaks_time)
-    return rr_intervals
+    return np.array(rr_intervals)
 
 
 def capacity(prsa_values: np.array) -> float:

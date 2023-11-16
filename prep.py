@@ -74,7 +74,7 @@ def read_data(data: str, signal_name: str, sep: str = ",") -> pd.DataFrame:
     try:
         df = df[["DateTime", signal_name]]
     except KeyError:
-        print("Wrong columns names!")
+        print(f"Wrong columns names in file {data}!")
 
     if sep != ",":
         try:
