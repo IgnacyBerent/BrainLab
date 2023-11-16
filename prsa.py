@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
-from scipy.signal import find_peaks
+import scipy.signal as ss
 
 
 def calculate(
@@ -18,6 +18,8 @@ def calculate(
 
     if mode != "DC" and mode != "AC":
         raise ValueError('Mode has to be "DC" or "AC"')
+    if len(x) < 2 * L:
+        raise ValueError("Signal window is too large")
 
     indexs = np.arange(len(x))
 
@@ -30,6 +32,7 @@ def calculate(
             # It chooses anchor points which meet condition: X_i > X_i-1,
             anchor_list = [i for i in indexs[L:-L] if x[i] > x[i - 1]]
     else:
+        percent_kernel = percent_kernel / 100
         if mode == "DC":
             # It chooses anchor points which meet condition: X_i < X_i-1,
             anchor_list = [
@@ -58,16 +61,24 @@ def calculate(
     return np.array(X_k)
 
 
-def get_rr_intervals(signal: np.array, height: float | int) -> np.array:
+def get_rr_intervals(signal_df: pd.DataFrame, height: float | int, distance: int) -> np.array:
     """
-    Takes signal and calculates rr intervals
-    :param signal: values of signal in form of np array vector
+    Takes signal DataFrame where columns are: 'Values' and 'TimeSteps' and calculates rr intervals
+    :param signal_df: dataframe with signal values and time steps
     :param height: minimum height above which will be registered peak
+    :param distance: minimum distance between peaks
     :return: rr intervals
     """
+    if height > np.max(signal_df["Values"]):
+        raise ValueError("Height is too large")
 
-    peaks, _ = find_peaks(signal, height)
-    return np.diff(peaks)
+    # finds peaks indexes
+    peaks_indexs, _ = ss.find_peaks(x = signal_df["Values"],height = height, distance = distance)
+    # makes array of time at wich peaks occured
+    peaks_time = signal_df["TimeSteps"].iloc[peaks_indexs].to_numpy() * 0.005
+    # calculates intervals between peaks
+    rr_intervals = np.diff(peaks_time)
+    return rr_intervals
 
 
 def capacity(prsa_values: np.array) -> float:
@@ -116,14 +127,73 @@ def plot_rr(prsa_values: np.array):
     plt.show()
 
 
-def analysie_data(df_1: pd.DataFrame, df_2: pd.DataFrame, percentile: int):
-    df_1.interpolate(inplace=True)
-    df_2.interpolate(inplace=True)
-    signal_1 = df_1["Values"].to_numpy()
-    signal_2 = df_2["Values"].to_numpy()
+def calculate_rr_dc_ac(signal_df: pd.DataFrame, percentile: float, distance: float) -> tuple[float, float]:
+    """
+    Calculates DC and AC capacity for given signal dataframe,
+    where columns are: 'Values' and 'TimeSteps'.
+    It firslty lineary interpolates signal,
+    then calculates rr intervals and finally calculates DC and AC capacity.
+    :param signal_df: dataframe with signal values and time steps
+    :param percentile: value between 0 and 1, which determines level of cut off
+    :param distance: minimum distance between peaks
+    :return: DC and AC capacity
+    """
 
-    cut_off_1 = np.percentile(signal_1, percentile)
-    cut_off_2 = np.percentile(signal_2, percentile)
+    if percentile < 0 or percentile >= 1:
+        raise ValueError("Percentile has to be between 0 and 1")
 
-    rr_signal_1 = get_rr_intervals(signal_1, cut_off_1)
-    rr_signal_2 = get_rr_intervals(signal_2, cut_off_2)
+    signal_df.interpolate(inplace=True)
+    cut_off = np.max(signal_df["Values"]) * percentile
+    rr_signal = get_rr_intervals(signal_df, cut_off, distance)
+
+    prsa__dc = calculate(rr_signal, 3, "DC")
+    prsa_ac = calculate(rr_signal, 3, "AC")
+
+    capacity_dc = capacity(prsa__dc)
+    capacity_ac = capacity(prsa_ac)
+
+    return capacity_dc, capacity_ac
+
+
+def compare_capacities(
+    title: str,
+    norm_dc: list[float],
+    norm_ac: list[float],
+    hip_dc: list[float],
+    hip_ac: list[float],
+):
+    """
+    Prints table with comparison of DC and AC capacity for normo- and hypercapnia
+    :param title: title of table
+    :param norm_dc: list of DC capacity values for normocapnia
+    :param norm_ac: list of AC capacity values for normocapnia
+    :param hip_dc: list of DC capacity values for hypercapnia
+    :param hip_ac: list of AC capacity values for hypercapnia
+    """
+
+    norm_dc_mean = np.mean(norm_dc)
+    norm_dc_std = np.std(norm_dc)
+    norm_ac_mean = np.mean(norm_ac)
+    norm_ac_std = np.std(norm_ac)
+    hip_dc_mean = np.mean(hip_dc)
+    hip_dc_std = np.std(hip_dc)
+    hip_ac_mean = np.mean(hip_ac)
+    hip_ac_std = np.std(hip_ac)
+
+    result_table = pd.DataFrame(
+        [
+            [
+                f"{norm_dc_mean:.2f} ± {norm_dc_std:.2f}",
+                f"{norm_ac_mean:.2f} ± {norm_ac_std:.2f}",
+            ],
+            [
+                f"{hip_dc_mean:.2f} ± {hip_dc_std:.2f}",
+                f"{hip_ac_mean:.2f} ± {hip_ac_std:.2f}",
+            ],
+        ],
+        index=["normocapnia", "hypercapnia"],
+        columns=["DC", "AC"],
+    )
+
+    print(title)
+    print(result_table)
