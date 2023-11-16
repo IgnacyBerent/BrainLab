@@ -61,12 +61,13 @@ def calculate(
     return np.array(X_k)
 
 
-def get_rr_intervals(signal_df: pd.DataFrame, height: float | int, distance: int) -> np.array:
+def get_rr_intervals(signal_df: pd.DataFrame, height: float | int, distance: int, show_plot: bool, plot_title) -> np.array:
     """
     Takes signal DataFrame where columns are: 'Values' and 'TimeSteps' and calculates rr intervals
     :param signal_df: dataframe with signal values and time steps
     :param height: minimum height above which will be registered peak
     :param distance: minimum distance between peaks
+    :param show_plot: if True, it shows plot with peaks
     :return: rr intervals
     """
     if height > np.max(signal_df["Values"]):
@@ -78,6 +79,12 @@ def get_rr_intervals(signal_df: pd.DataFrame, height: float | int, distance: int
     peaks_time = signal_df["TimeSteps"].iloc[peaks_indexs].to_numpy() * 0.005
     # calculates intervals between peaks
     rr_intervals = np.diff(peaks_time)
+
+    if show_plot:
+        signal_df.plot.scatter(x='TimeSteps', y='Values')
+        plt.title(plot_title)
+        plt.scatter(signal_df['TimeSteps'][peaks_indexs], signal_df['Values'][peaks_indexs], c='r')
+
     return np.array(rr_intervals)
 
 
@@ -127,7 +134,7 @@ def plot_rr(prsa_values: np.array):
     plt.show()
 
 
-def calculate_rr_dc_ac(signal_df: pd.DataFrame, percentile: float, distance: float) -> tuple[float, float]:
+def calculate_rr_dc_ac(signal_df: pd.DataFrame, percentile: float, distance: float, show_plot: bool, plot_title: str) -> tuple[float, float]:
     """
     Calculates DC and AC capacity for given signal dataframe,
     where columns are: 'Values' and 'TimeSteps'.
@@ -136,6 +143,8 @@ def calculate_rr_dc_ac(signal_df: pd.DataFrame, percentile: float, distance: flo
     :param signal_df: dataframe with signal values and time steps
     :param percentile: value between 0 and 1, which determines level of cut off
     :param distance: minimum distance between peaks
+    :param show_plot: if True, it shows plot with peaks
+    :param plot_title: title of plot
     :return: DC and AC capacity
     """
 
@@ -144,7 +153,7 @@ def calculate_rr_dc_ac(signal_df: pd.DataFrame, percentile: float, distance: flo
 
     signal_df.interpolate(inplace=True)
     cut_off = np.max(signal_df["Values"]) * percentile
-    rr_signal = get_rr_intervals(signal_df, cut_off, distance)
+    rr_signal = get_rr_intervals(signal_df, cut_off, distance, show_plot, plot_title)
 
     prsa__dc = calculate(rr_signal, 3, "DC")
     prsa_ac = calculate(rr_signal, 3, "AC")
