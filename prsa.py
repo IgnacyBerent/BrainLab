@@ -140,7 +140,7 @@ def calculate_rr_dc_ac(signal_df: pd.DataFrame, percentile: float, distance: flo
     """
     Calculates DC and AC capacity for given signal dataframe,
     where columns are: 'Values' and 'TimeSteps'.
-    It firslty lineary interpolates signal,
+    It firstly linearly interpolates signal,
     then calculates rr intervals and finally calculates DC and AC capacity.
     :param signal_df: dataframe with signal values and time steps
     :param percentile: value between 0 and 1, which determines level of cut off
