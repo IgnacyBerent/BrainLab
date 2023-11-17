@@ -5,21 +5,23 @@ import scipy.signal as ss
 
 
 def calculate(
-    x: np.array, L: int, mode: str, percent_kernel: None | int = None
-) -> np.array:
+    x: np.array, L: int, mode: str, percent_kernel: None | float = None
+) -> tuple[np.array, int]:
     """
     Calculates PRSA on based on point 2 from https://www.sciencedirect.com/science/article/pii/S037843710501006X
     :param x: values of signal in form of np array vector
     :param L: signal window, where 2L should be larger than the slowest oscillation
     :param mode: "DC" or "AC" (deceleration or acceleration)
-    :param percent_kernel: maximum percentage value of change between two values
-    :return: prsa values
+    :param percent_kernel: Maximum percentage of change between two values
+    :return: prsa values, number of windows
     """
 
     if mode != "DC" and mode != "AC":
         raise ValueError('Mode has to be "DC" or "AC"')
     if len(x) < 2 * L:
         raise ValueError("Signal window is too large")
+    if percent_kernel < 0:
+        raise ValueError("Kernel can't be negative")
 
     indexs = np.arange(len(x))
 
@@ -32,14 +34,13 @@ def calculate(
             # It chooses anchor points which meet condition: X_i > X_i-1,
             anchor_list = [i for i in indexs[L:-L] if x[i] > x[i - 1]]
     else:
-        percent_kernel = percent_kernel / 100
         if mode == "DC":
             # It chooses anchor points which meet condition: X_i < X_i-1,
             anchor_list = [
                 i
                 for i in indexs[L:-L]
                 if x[i] < x[i - 1]
-                if abs(x[i] - x[i - 1]) / x[i - 1] < percent_kernel
+                and abs(x[i] - x[i - 1]) / x[i - 1] < percent_kernel
             ]
         elif mode == "AC":
             # It chooses anchor points which meet condition: X_i > X_i-1,
@@ -47,10 +48,11 @@ def calculate(
                 i
                 for i in indexs[L:-L]
                 if x[i] > x[i - 1]
-                if abs(x[i] - x[i - 1]) / x[i - 1] < percent_kernel
+                and abs(x[i] - x[i - 1]) / x[i - 1] < percent_kernel
             ]
 
     anchor_points = np.array(anchor_list)
+    n_windows = len(anchor_points)
 
     # calculates averages of anchor points for each 'k' index
     X_k = []
@@ -58,7 +60,7 @@ def calculate(
         X_iv = x[anchor_points + k]
         X_k.append(np.mean(X_iv))
 
-    return np.array(X_k)
+    return np.array(X_k), n_windows
 
 
 def get_rr_intervals(signal_df: pd.DataFrame, height: float | int, distance: int, show_plot: bool, plot_title) -> np.array:
@@ -134,7 +136,7 @@ def plot_rr(prsa_values: np.array):
     plt.show()
 
 
-def calculate_rr_dc_ac(signal_df: pd.DataFrame, percentile: float, distance: float, show_plot: bool, plot_title: str) -> tuple[float, float]:
+def calculate_rr_dc_ac(signal_df: pd.DataFrame, percentile: float, distance: float, show_plot: bool, plot_title: str) -> tuple[float, float, int, int]:
     """
     Calculates DC and AC capacity for given signal dataframe,
     where columns are: 'Values' and 'TimeSteps'.
@@ -145,7 +147,7 @@ def calculate_rr_dc_ac(signal_df: pd.DataFrame, percentile: float, distance: flo
     :param distance: minimum distance between peaks
     :param show_plot: if True, it shows plot with peaks
     :param plot_title: title of plot
-    :return: DC and AC capacity
+    :return: DC and AC capacity, and size of windows for them
     """
 
     if percentile < 0 or percentile >= 1:
@@ -155,49 +157,49 @@ def calculate_rr_dc_ac(signal_df: pd.DataFrame, percentile: float, distance: flo
     cut_off = np.max(signal_df["Values"]) * percentile
     rr_signal = get_rr_intervals(signal_df, cut_off, distance, show_plot, plot_title)
 
-    prsa__dc = calculate(rr_signal, 3, "DC")
-    prsa_ac = calculate(rr_signal, 3, "AC")
+    prsa__dc, n_windows_DC = calculate(rr_signal, 3, "DC", 0.2)
+    prsa_ac, n_windows_AC = calculate(rr_signal, 3, "AC", 0.2)
 
     capacity_dc = capacity(prsa__dc)
     capacity_ac = capacity(prsa_ac)
 
-    return capacity_dc, capacity_ac
+    return capacity_dc, capacity_ac, n_windows_DC, n_windows_AC
 
 
 def compare_capacities(
     title: str,
-    norm_dc: list[float],
-    norm_ac: list[float],
-    hip_dc: list[float],
-    hip_ac: list[float],
+    norm_dc: list[float | int],
+    norm_ac: list[float | int],
+    hyp_dc: list[float | int],
+    hyp_ac: list[float | int],
 ):
     """
     Prints table with comparison of DC and AC capacity for normo- and hypercapnia
     :param title: title of table
-    :param norm_dc: list of DC capacity values for normocapnia
-    :param norm_ac: list of AC capacity values for normocapnia
-    :param hip_dc: list of DC capacity values for hypercapnia
-    :param hip_ac: list of AC capacity values for hypercapnia
+    :param norm_dc: list of DC values for normocapnia
+    :param norm_ac: list of AC values for normocapnia
+    :param hyp_dc: list of DC values for hypercapnia
+    :param hyp_ac: list of AC values for hypercapnia
     """
 
     norm_dc_mean = np.mean(norm_dc)
     norm_dc_std = np.std(norm_dc)
     norm_ac_mean = np.mean(norm_ac)
     norm_ac_std = np.std(norm_ac)
-    hip_dc_mean = np.mean(hip_dc)
-    hip_dc_std = np.std(hip_dc)
-    hip_ac_mean = np.mean(hip_ac)
-    hip_ac_std = np.std(hip_ac)
+    hip_dc_mean = np.mean(hyp_dc)
+    hip_dc_std = np.std(hyp_dc)
+    hip_ac_mean = np.mean(hyp_ac)
+    hip_ac_std = np.std(hyp_ac)
 
     result_table = pd.DataFrame(
         [
             [
-                f"{norm_dc_mean:.2f} ± {norm_dc_std:.2f}",
-                f"{norm_ac_mean:.2f} ± {norm_ac_std:.2f}",
+                f"{norm_dc_mean:.3f} ± {norm_dc_std:.3f}",
+                f"{norm_ac_mean:.3f} ± {norm_ac_std:.3f}",
             ],
             [
-                f"{hip_dc_mean:.2f} ± {hip_dc_std:.2f}",
-                f"{hip_ac_mean:.2f} ± {hip_ac_std:.2f}",
+                f"{hip_dc_mean:.3f} ± {hip_dc_std:.3f}",
+                f"{hip_ac_mean:.3f} ± {hip_ac_std:.3f}",
             ],
         ],
         index=["normocapnia", "hypercapnia"],
