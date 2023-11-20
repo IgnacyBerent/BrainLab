@@ -3,6 +3,8 @@ import numpy as np
 import datetime
 import xlrd
 from typing import List, Tuple
+import scipy.signal as sp_sig
+import scipy.fft as sp_fft
 
 
 def icmp_dateformat_to_datetime(icmp_time_mark: float) -> datetime:
@@ -204,3 +206,45 @@ def files_time_analysis(files: list[pd.DataFrame]):
     )
     print(f"Shortest file time duration: {format_time(np.min(files_time))} min")
     print(f"Longest file time duration: {format_time(np.max(files_time))} min")
+
+def calculate_fundamental_component(signal: np.array, fs: float, low_f=0.66, high_f=3):
+        """
+        Calculates fundamental component of signal in given frequency range
+        :param signal: signal
+        :param fs: sampling frequency
+        :param low_f: lower frequency range
+        :param high_f: higher frequency range
+        :return: fundamental frequency and its amplitude
+        """
+        n_fft = len(signal)
+        win_fft_amp = sp_fft.rfft(sp_sig.detrend(signal) * sp_sig.windows.hann(n_fft), n=n_fft)
+        corr_factor = n_fft / np.sum(sp_sig.windows.hann(n_fft))
+        win_fft_amp = abs(win_fft_amp) * 2 / n_fft * corr_factor
+
+        win_fft_f = sp_fft.rfftfreq(n_fft, d=1 / fs)
+        f_low = int(low_f * n_fft / fs)
+        f_upp = int(high_f * n_fft / fs)
+        win_fft_amp_range = win_fft_amp[f_low:f_upp]
+        fund_idx = np.argmax(win_fft_amp_range) + f_low
+
+        fund_f = win_fft_f[fund_idx]
+        fund_amp = win_fft_amp[fund_idx]
+
+        # plt.figure()
+        # plt.plot(win_fft_f, win_fft_amp)
+        # plt.plot(win_fft_f[fund_idx], win_fft_amp[fund_idx], '.r')
+        # plt.xlim(0, 10)
+        # plt.show()
+
+        return fund_f, fund_amp
+
+
+def calculate_mean_HR(signal: np.array, fs: float =200):
+        """
+        Calculates mean HR from signal
+        :param signal: signal
+        :param fs: sampling frequency
+        """
+        c_f1, amp_abp = calculate_fundamental_component(signal, fs)
+        HR = c_f1*60 
+        return HR
