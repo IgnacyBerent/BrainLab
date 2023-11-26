@@ -20,8 +20,6 @@ def calculate(
         raise ValueError('Mode has to be "DC" or "AC"')
     if len(x) < 2 * L:
         raise ValueError("Signal window is too large")
-    if percent_kernel < 0:
-        raise ValueError("Kernel can't be negative")
 
     indexs = np.arange(len(x))
 
@@ -34,6 +32,8 @@ def calculate(
             # It chooses anchor points which meet condition: X_i > X_i-1,
             anchor_list = [i for i in indexs[L:-L] if x[i] > x[i - 1]]
     else:
+        if percent_kernel < 0:
+            raise ValueError("Kernel can't be negative")
         if mode == "DC":
             # It chooses anchor points which meet condition: X_i < X_i-1,
             anchor_list = [
@@ -56,7 +56,7 @@ def calculate(
 
     # calculates averages of anchor points for each 'k' index
     X_k = []
-    for k in range(-L, L):
+    for k in range(-L, L + 1):
         X_iv = x[anchor_points + k]
         X_k.append(np.mean(X_iv))
 

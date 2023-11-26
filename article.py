@@ -5,7 +5,7 @@ import scipy.signal as ss
 
 def calculate(
     x: np.array, L: int, mode: str, percent_kernel: None | float = None
-) -> tuple[np.array, np.array]:
+) -> tuple[np.array, np.array, np.array]:
     """
     Calculates PRSA on based on point 2 from https://www.sciencedirect.com/science/article/pii/S037843710501006X
     :param x: values of signal in form of np array vector
@@ -19,8 +19,7 @@ def calculate(
         raise ValueError('Mode has to be "DC" or "AC"')
     if len(x) < 2 * L:
         raise ValueError("Signal window is too large")
-    if percent_kernel < 0:
-        raise ValueError("Kernel can't be negative")
+
 
     indexs = np.arange(len(x))
 
@@ -33,6 +32,8 @@ def calculate(
             # It chooses anchor points which meet condition: X_i > X_i-1,
             anchor_list = [i for i in indexs[L:-L] if x[i] > x[i - 1]]
     else:
+        if percent_kernel < 0:
+            raise ValueError("Kernel can't be negative")
         if mode == "DC":
             # It chooses anchor points which meet condition: X_i < X_i-1,
             anchor_list = [
@@ -53,13 +54,18 @@ def calculate(
     anchor_points = np.array(anchor_list)
     n_windows = len(anchor_points)
 
+    # for each anchor point take values from window of size 2L
+    anchor_neighbours = []
+    for i in anchor_points:
+        anchor_neighbours.append(x[i - L : i + L + 1]*1000)
+
     # calculates averages of anchor points for each 'k' index
     X_k = []
-    for k in range(-L, L):
+    for k in range(-L, L + 1):
         X_iv = x[anchor_points + k]
         X_k.append(np.mean(X_iv))
 
-    return np.array(X_k), anchor_points
+    return np.array(X_k), anchor_points, anchor_neighbours
 
 
 def get_rr_intervals_with_time(signal_df: pd.DataFrame, height: float | int, distance: int, show_plot: bool, plot_title) -> dict:
@@ -86,12 +92,16 @@ def get_rr_intervals_with_time(signal_df: pd.DataFrame, height: float | int, dis
     if show_plot:
         signal_df.plot.scatter(x='TimeSteps', y='Values')
         plt.title(plot_title)
-        plt.scatter(signal_df['TimeSteps'][peaks_indexs], signal_df['Values'][peaks_indexs], c='r')
+        plt.scatter(signal_df['TimeSteps'][peaks_indexs], signal_df['Values'][peaks_indexs], c='r', s=15)
+        plt.legend(['Signal', 'Peaks'])
+        plt.show()
 
     return rr_intervals_dict
 
 
-def plot_with_anchors(rr_signal_dict: dict, anchor_points: np.array, L: int):
+
+
+def plot_with_anchors(rr_signal_dict: dict, ac_anchor_points: np.array, dc_anchor_points, L: int) -> None:
     """
     Makes Scatter plot of signal with anchor points
     :param signal: signal to plot
@@ -99,23 +109,42 @@ def plot_with_anchors(rr_signal_dict: dict, anchor_points: np.array, L: int):
     :param L: window size
     :return: None
     """
-    # make scatter plot of signal with connected points
-    # make the middle level at 1.0, and let y axis be called
-    # RR Interval (s)
-    # X axis are keys of rr_signal_dict
-    # Y axis are values of rr_signal_dict
-    # make x axis be called Time (s)
-    # anchor points are indexes of anchor points on Time axis of value
-    # eqyal to signal at that point
-    # make anchor points be red and have shape of x
+    keys_list = list(rr_signal_dict.keys())
+    values_list = list(rr_signal_dict.values())
+    keys_list = keys_list[L:-L]
+    values_list = values_list[L:-L]
 
-    plt.scatter(rr_signal_dict.keys(), rr_signal_dict.values(), c='b')
-    plt.scatter(list(rr_signal_dict.keys())[anchor_points], list(rr_signal_dict.values())[anchor_points], c='r', marker='x')
+    # adjust anchor points indexises to shortened signal
+    ac_anchor_points = ac_anchor_points - L
+    dc_anchor_points = dc_anchor_points - L
+
+    # Plot line connecting points
+    plt.plot(keys_list, values_list, c='b')
+    plt.scatter([keys_list[i] for i in ac_anchor_points], [values_list[i] for i in ac_anchor_points], c='r', marker='x')
+    plt.scatter([keys_list[i] for i in dc_anchor_points], [values_list[i] for i in dc_anchor_points], c='g', marker='o')
+
+    #add legend that describes anchor points
+    plt.legend(['RR intervals', 'AC anchor points', 'DC anchor points'])
+
+
     plt.title("RR intervals with anchor points")
     plt.xlabel("Time (s)")
     plt.ylabel("RR Interval (s)")
     plt.show()
     
+
+def plot_all_anchors_with_neighbours(anchor_neighbours: np.array, L: int) -> None:
+    """
+    Plots all anchor points with their neighbours
+    :param anchor_neighbours: array of anchor points with their neighbours
+    :param L: window size
+    :return: None
+    """
+    for i in range(len(anchor_neighbours)):
+        plt.plot(np.arange(-L, L + 1), anchor_neighbours[i])
+    plt.xlabel("Interval number (relative to anchor)")
+    plt.ylabel("RR Interval (ms)")
+    plt.show()
     
 
 
