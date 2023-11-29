@@ -100,7 +100,7 @@ def get_rr_intervals_with_time(
         signal_df.plot.scatter(x='TimeSteps', y='Values')
         plt.title(plot_title)
         plt.scatter(signal_df['TimeSteps'][peaks_indexs], signal_df['Values'][peaks_indexs], c='r', s=15)
-        plt.legend(['Signal', 'Peaks'])
+        plt.legend(['Sygnał', 'Szczyty'])
         plt.ylabel(y_label)
         plt.show()
 
@@ -136,11 +136,10 @@ def plot_with_anchors(
     plt.scatter([keys_list[i] for i in dc_anchor_points], [values_list[i] for i in dc_anchor_points], c='g', marker='o')
 
     # add legend that describes anchor points
-    plt.legend(['RR intervals', 'accelerating anchor points', 'decelerating anchor points'])
+    plt.legend(['RR interwały', 'AC punkty', 'DC punkty'])
 
-    plt.title("RR intervals with anchor points")
-    plt.xlabel("Time (s)")
-    plt.ylabel("RR Interval (s)")
+    plt.title("RR interwały z sąsiadami")
+    plt.ylabel("RR Interwał (s)")
     plt.show()
 
 
@@ -153,7 +152,7 @@ def plot_all_anchors_with_neighbours(anchor_neighbours: np.array, L: int) -> Non
     """
     for i in range(len(anchor_neighbours)):
         plt.plot(np.arange(-L, L + 1), anchor_neighbours[i])
-    plt.xlabel("Interval number (relative to anchor)")
-    plt.ylabel("RR Interval (ms)")
-    plt.title('All anchor points with corresponding neighbours')
+    plt.xlabel("Numer indeksu (w zależności od kotwicy)")
+    plt.ylabel("RR Interwał (ms)")
+    plt.title('Wszystkie punkty kotwicze z ich sąsiadami')
     plt.show()
