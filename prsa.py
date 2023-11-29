@@ -56,7 +56,7 @@ def calculate(
 
     # calculates averages of anchor points for each 'k' index
     X_k = []
-    for k in range(-L, L + 1):
+    for k in range(-L, L):
         X_iv = x[anchor_points + k]
         X_k.append(np.mean(X_iv))
 
