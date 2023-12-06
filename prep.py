@@ -72,17 +72,17 @@ def read_data(data: str, signal_name: str, sep: str = ",") -> pd.DataFrame:
              where time steps are 5ms steps between signal values.
     """
 
-    df = pd.read_csv(data, sep=",")
+    df = pd.read_csv(data, sep=sep)
     try:
         df = df[["DateTime", signal_name]]
     except KeyError:
-        print(f"Wrong columns names in file {data}!")
+        raise KeyError("Wrong signal name!")
 
     if sep != ",":
         try:
             df = df.apply(lambda x: x.str.replace(",", "."))
         except AttributeError:
-            pass
+            raise AttributeError("Wrong separator!")
 
     df = df.apply(lambda x: [float(num) for num in x])
     df["DateTime"] = [icmp_dateformat_to_datetime(date) for date in df["DateTime"]]
