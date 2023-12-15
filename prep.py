@@ -76,7 +76,7 @@ def read_data(data: str, signal_name: str, sep: str = ",") -> pd.DataFrame:
     try:
         df = df[["DateTime", signal_name]]
     except KeyError:
-        raise KeyError("Wrong signal name!")
+        raise KeyError(f"Wrong signal name in {signal_name}!")
 
     if sep != ",":
         try:

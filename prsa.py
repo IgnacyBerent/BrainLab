@@ -22,6 +22,7 @@ def calculate(
         raise ValueError("Signal window is too large")
 
     indexs = np.arange(len(x))
+    anchor_list = None
 
     # It doesn't take under consideration first and last L points
     if percent_kernel is None:
@@ -39,16 +40,14 @@ def calculate(
             anchor_list = [
                 i
                 for i in indexs[L:-L]
-                if x[i] < x[i - 1]
-                and abs(x[i] - x[i - 1]) / x[i - 1] < percent_kernel
+                if x[i] < x[i - 1] and abs(x[i] - x[i - 1]) / x[i - 1] < percent_kernel
             ]
         elif mode == "AC":
             # It chooses anchor points which meet condition: X_i > X_i-1,
             anchor_list = [
                 i
                 for i in indexs[L:-L]
-                if x[i] > x[i - 1]
-                and abs(x[i] - x[i - 1]) / x[i - 1] < percent_kernel
+                if x[i] > x[i - 1] and abs(x[i] - x[i - 1]) / x[i - 1] < percent_kernel
             ]
 
     anchor_points = np.array(anchor_list)
@@ -63,29 +62,42 @@ def calculate(
     return np.array(X_k), n_windows
 
 
-def get_rr_intervals(signal_df: pd.DataFrame, height: float | int, distance: int, show_plot: bool, plot_title) -> np.array:
+def get_rr_intervals(
+    signal_df: pd.DataFrame,
+    height: float | int,
+    distance: int,
+    show_plot: bool = False,
+    plot_title: str = None,
+) -> np.array:
     """
     Takes signal DataFrame where columns are: 'Values' and 'TimeSteps' and calculates rr intervals
     :param signal_df: dataframe with signal values and time steps
     :param height: minimum height above which will be registered peak
     :param distance: minimum distance between peaks
     :param show_plot: if True, it shows plot with peaks
+    :param plot_title: title of plot
     :return: rr intervals
     """
     if height > np.max(signal_df["Values"]):
         raise ValueError("Height is too large")
 
     # finds peaks indexes
-    peaks_indexs, _ = ss.find_peaks(x = signal_df["Values"],height = height, distance = distance)
+    peaks_indexs, _ = ss.find_peaks(
+        x=signal_df["Values"], height=height, distance=distance
+    )
     # makes array of time at wich peaks occured
     peaks_time = signal_df["TimeSteps"].iloc[peaks_indexs].to_numpy() * 0.005
     # calculates intervals between peaks
     rr_intervals = np.diff(peaks_time)
 
     if show_plot:
-        signal_df.plot.scatter(x='TimeSteps', y='Values')
+        signal_df.plot.scatter(x="TimeSteps", y="Values")
         plt.title(plot_title)
-        plt.scatter(signal_df['TimeSteps'][peaks_indexs], signal_df['Values'][peaks_indexs], c='r')
+        plt.scatter(
+            signal_df["TimeSteps"][peaks_indexs],
+            signal_df["Values"][peaks_indexs],
+            c="r",
+        )
 
     return np.array(rr_intervals)
 
@@ -136,7 +148,13 @@ def plot_rr(prsa_values: np.array):
     plt.show()
 
 
-def calculate_rr_dc_ac(signal_df: pd.DataFrame, percentile: float, distance: float, show_plot: bool, plot_title: str) -> tuple[float, float, int, int]:
+def calculate_rr_dc_ac(
+    signal_df: pd.DataFrame,
+    percentile: float,
+    distance: int | float,
+    show_plot: bool,
+    plot_title: str,
+) -> tuple[float, float, int, int]:
     """
     Calculates DC and AC capacity for given signal dataframe,
     where columns are: 'Values' and 'TimeSteps'.
@@ -157,13 +175,13 @@ def calculate_rr_dc_ac(signal_df: pd.DataFrame, percentile: float, distance: flo
     cut_off = np.max(signal_df["Values"]) * percentile
     rr_signal = get_rr_intervals(signal_df, cut_off, distance, show_plot, plot_title)
 
-    prsa__dc, n_windows_DC = calculate(rr_signal, 3, "DC", 0.2)
-    prsa_ac, n_windows_AC = calculate(rr_signal, 3, "AC", 0.2)
+    prsa__dc, n_windows_dc = calculate(rr_signal, 3, "DC", 0.2)
+    prsa_ac, n_windows_ac = calculate(rr_signal, 3, "AC", 0.2)
 
     capacity_dc = capacity(prsa__dc)
     capacity_ac = capacity(prsa_ac)
 
-    return capacity_dc, capacity_ac, n_windows_DC, n_windows_AC
+    return capacity_dc, capacity_ac, n_windows_dc, n_windows_ac
 
 
 def compare_capacities(
