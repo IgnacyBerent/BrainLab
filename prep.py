@@ -208,7 +208,7 @@ def files_time_analysis(files: list[pd.DataFrame]):
     print(f"Longest file time duration: {format_time(np.max(files_time))} min")
 
 
-def calculate_fundamental_component(signal: np.array, fs: float, low_f=0.66, high_f=3):
+def calculate_fundamental_component(signal: np.array, fs: float, low_f=0.66, high_f=3) -> Tuple[float, float]:
     """
     Calculates fundamental component of signal in given frequency range
     :param signal: signal
@@ -242,7 +242,7 @@ def calculate_fundamental_component(signal: np.array, fs: float, low_f=0.66, hig
     return fund_f, fund_amp
 
 
-def calculate_mean_HR(signal: np.array, fs: float = 200):
+def calculate_mean_HR(signal: np.array, fs: float = 200) -> float:
     """
     Calculates mean HR from signal
     :param signal: signal
@@ -251,3 +251,27 @@ def calculate_mean_HR(signal: np.array, fs: float = 200):
     c_f1, amp_abp = calculate_fundamental_component(signal, fs)
     HR = c_f1 * 60
     return HR
+
+
+def save_to_csv(
+        file_tittle, filenames: list[str],
+        val_1: list[float], val_2: list[float], val_3: list[float], val_4: list[float],
+        name_1:str, name_2:str, name_3:str, name_4:str 
+        ):
+    """
+    Saves results to csv file
+    :param file_tittle: name of the file
+    :param filenames: list of filenames
+    :param val_1: list of values
+    :param val_2: list of values
+    :param val_3: list of values
+    :param val_4: list of values
+    :param name_1: name of the first column
+    :param name_2: name of the second column
+    :param name_3: name of the third column
+    :param name_4: name of the fourth column
+    """
+    with open(f'{file_tittle}.csv', 'w') as f:
+        f.write(f'file number;{name_1};{name_2};{name_3};{name_4}\n')
+        for i in range(len(filenames)):
+            f.write(f'{filenames[i][-7:-6]};{val_1[i]};{val_2[i]};{val_3[i]};{val_4[i]}\n')
