@@ -5,6 +5,7 @@ import xlrd
 from typing import List, Tuple
 import scipy.signal as sp_sig
 import scipy.fft as sp_fft
+import os
 
 
 def icmp_dateformat_to_datetime(icmp_time_mark: float) -> datetime:
@@ -253,25 +254,20 @@ def calculate_mean_HR(signal: np.array, fs: float = 200) -> float:
     return HR
 
 
-def save_to_csv(
-        file_tittle, filenames: list[str],
-        val_1: list[float], val_2: list[float], val_3: list[float], val_4: list[float],
-        name_1:str, name_2:str, name_3:str, name_4:str 
-        ):
+def save_to_csv(file_tittle: str, filenames: list[str], folder_name: str, **columns: list[float]):
     """
     Saves results to csv file
     :param file_tittle: name of the file
     :param filenames: list of filenames
-    :param val_1: list of values
-    :param val_2: list of values
-    :param val_3: list of values
-    :param val_4: list of values
-    :param name_1: name of the first column
-    :param name_2: name of the second column
-    :param name_3: name of the third column
-    :param name_4: name of the fourth column
+    :param columns: column names and their values
     """
-    with open(f'{file_tittle}.csv', 'w') as f:
-        f.write(f'file number;{name_1};{name_2};{name_3};{name_4}\n')
+    columns_names = list(columns.keys())
+    columns_values = list(columns.values())
+    
+    # Create the directory if it doesn't exist
+    os.makedirs(folder_name, exist_ok=True)
+    
+    with open(f'{folder_name}/{file_tittle}.csv', 'w') as f:
+        f.write(f'file number;{";".join(columns_names)}\n')
         for i in range(len(filenames)):
-            f.write(f'{filenames[i][-7:-6]};{val_1[i]};{val_2[i]};{val_3[i]};{val_4[i]}\n')
+            f.write(f'{filenames[i][-7:-5]};{";".join([str(val[i]) for val in columns_values])}\n')
