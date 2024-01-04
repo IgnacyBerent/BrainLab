@@ -59,7 +59,7 @@ def fill_missing_steps(df: pd.DataFrame) -> pd.DataFrame:
     return new_data
 
 
-def read_data(data: str, signal_name: str, sep: str = ",") -> pd.DataFrame:
+def read_data(data: str, signal_name: str, sep: str = ",", nrows: int = None) -> pd.DataFrame:
     """
     Reads csv data from icm+ program and adjusts it for later use.
     It reads only columns called: DateTime and 'signal_name'
@@ -69,11 +69,12 @@ def read_data(data: str, signal_name: str, sep: str = ",") -> pd.DataFrame:
     :param data: measurements performed using icm+ program
     :param signal_name: column name of signal values
     :param sep: separator in csv file, default ','
+    :param nrows: number of rows to read, default None
     :return: adjusted Data Frame for further operations, with column names 'TimeSteps' and 'Values',
              where time steps are 5ms steps between signal values.
     """
 
-    df = pd.read_csv(data, sep=sep)
+    df = pd.read_csv(data, sep=sep, nrows=nrows)
     try:
         df = df[["DateTime", signal_name]]
     except KeyError:
@@ -98,7 +99,7 @@ def read_data(data: str, signal_name: str, sep: str = ",") -> pd.DataFrame:
 
 
 def find_longest_segments(
-    df: pd.DataFrame, n: int = 1
+        df: pd.DataFrame, n: int = 1
 ) -> List[Tuple[np.array, Tuple[str, str]]]:
     """
     Takes Data Frame with column names 'TimeSteps' and 'Values'.
@@ -114,8 +115,8 @@ def find_longest_segments(
     current_sequence = []
     for val, step in zip(df["Values"], df["TimeSteps"]):
         if not pd.isna(val) or (
-            pd.isna(val)
-            and (not current_sequence or not pd.isna(current_sequence[-1][1]))
+                pd.isna(val)
+                and (not current_sequence or not pd.isna(current_sequence[-1][1]))
         ):
             current_sequence.append((step, val))
         else:
@@ -245,8 +246,8 @@ def calculate_fundamental_component(signal: np.array, fs: float, low_f=0.66, hig
 
 def calculate_mean_HR(signal: np.array, fs: float = 200) -> float:
     """
-    Calculates mean HR from signal
-    :param signal: signal
+    Calculates mean HR from abp signal
+    :param signal: abp signal
     :param fs: sampling frequency
     """
     c_f1, amp_abp = calculate_fundamental_component(signal, fs)
@@ -254,20 +255,33 @@ def calculate_mean_HR(signal: np.array, fs: float = 200) -> float:
     return HR
 
 
-def save_to_csv(file_tittle: str, filenames: list[str], folder_name: str, **columns: list[float]):
+def save_to_csv(file_tittle: str, folder_name: str, **columns: dict[str: float]):
     """
     Saves results to csv file
     :param file_tittle: name of the file
-    :param filenames: list of filenames
-    :param columns: column names and their values
+    :param folder_name: name of the folder
+    :param columns: column names and their values for given file
     """
+
+    # Get the column names and values
     columns_names = list(columns.keys())
     columns_values = list(columns.values())
-    
+
+    # Get the filenames
+    filenames = set()
+    for col in columns_values:
+        filenames.update(list(col.keys()))
+
+    filenames = list(filenames)
+    filenames.sort(key=lambda x: int(x))
     # Create the directory if it doesn't exist
     os.makedirs(folder_name, exist_ok=True)
-    
+
     with open(f'{folder_name}/{file_tittle}.csv', 'w') as f:
         f.write(f'file number;{";".join(columns_names)}\n')
-        for i in range(len(filenames)):
-            f.write(f'{filenames[i][-7:-5]};{";".join([str(val[i]) for val in columns_values])}\n')
+        for filename in filenames:
+            row_values = [row.get(filename, -np.inf) for row in columns_values]
+            if -np.inf in row_values:
+                continue
+            f.write(f'{filename};{";".join([str(val) for val in row_values])}\n')
+
