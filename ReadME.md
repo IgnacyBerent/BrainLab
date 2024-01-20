@@ -10,6 +10,7 @@ Aim 2. The characteristic of the contemporaneous relationship between autonomic 
 
 Aim 3. A robust understanding of how cerebral autoregulation and ANS are interconnected in patients with intracranial pathologies
 
+<a href=https://www.linkedin.com/company/automatic-ca-and-ans-using-ml/about/>Project official LinkedIn profile</a>
 
 ## Aim of the repository
 The aim of this repository is to provide the code for phase rectified signal averaging (PRSA) and to applay it to the data from the project AUTOMATIC. The code is divided into two parts:
