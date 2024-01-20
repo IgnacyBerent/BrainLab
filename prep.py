@@ -253,35 +253,3 @@ def calculate_mean_HR(signal: np.array, fs: float = 200) -> float:
     c_f1, amp_abp = calculate_fundamental_component(signal, fs)
     HR = c_f1 * 60
     return HR
-
-
-def save_to_csv(file_tittle: str, folder_name: str, **columns: dict[str: float]):
-    """
-    Saves results to csv file
-    :param file_tittle: name of the file
-    :param folder_name: name of the folder
-    :param columns: column names and their values for given file
-    """
-
-    # Get the column names and values
-    columns_names = list(columns.keys())
-    columns_values = list(columns.values())
-
-    # Get the filenames
-    filenames = set()
-    for col in columns_values:
-        filenames.update(list(col.keys()))
-
-    filenames = list(filenames)
-    filenames.sort(key=lambda x: int(x))
-    # Create the directory if it doesn't exist
-    os.makedirs(folder_name, exist_ok=True)
-
-    with open(f'{folder_name}/{file_tittle}.csv', 'w') as f:
-        f.write(f'file number;{";".join(columns_names)}\n')
-        for filename in filenames:
-            row_values = [row.get(filename, -np.inf) for row in columns_values]
-            if -np.inf in row_values:
-                continue
-            f.write(f'{filename};{";".join([str(val) for val in row_values])}\n')
-

@@ -62,46 +62,6 @@ def calculate(
     return np.array(X_k), n_windows
 
 
-def get_rr_intervals(
-    signal_df: pd.DataFrame,
-    height: float | int,
-    distance: int,
-    show_plot: bool = False,
-    plot_title: str = None,
-) -> np.array:
-    """
-    Takes signal DataFrame where columns are: 'Values' and 'TimeSteps' and calculates rr intervals
-    :param signal_df: dataframe with signal values and time steps
-    :param height: minimum height above which will be registered peak
-    :param distance: minimum distance between peaks
-    :param show_plot: if True, it shows plot with peaks
-    :param plot_title: title of plot
-    :return: rr intervals
-    """
-    if height > np.max(signal_df["Values"]):
-        raise ValueError("Height is too large")
-
-    # finds peaks indexes
-    peaks_indexs, _ = ss.find_peaks(
-        x=signal_df["Values"], height=height, distance=distance
-    )
-    # makes array of time at wich peaks occured
-    peaks_time = signal_df["TimeSteps"].iloc[peaks_indexs].to_numpy() * 0.005
-    # calculates intervals between peaks
-    rr_intervals = np.diff(peaks_time)
-
-    if show_plot:
-        signal_df.plot.scatter(x="TimeSteps", y="Values")
-        plt.title(plot_title)
-        plt.scatter(
-            signal_df["TimeSteps"][peaks_indexs],
-            signal_df["Values"][peaks_indexs],
-            c="r",
-        )
-
-    return np.array(rr_intervals)
-
-
 def capacity(prsa_values: np.array) -> float:
     """
     Calculates ascending/descending capacity of prsa signal,
@@ -128,60 +88,6 @@ def plot(prsa_values: np.array):
     plt.xlabel("Index k")
     plt.ylabel("X(k) [mm[Hg]]")
     plt.show()
-
-
-def plot_rr(prsa_values: np.array):
-    """
-    Plots prsa signal
-    :param prsa_values: calculated prsa values for each k
-    :return: prsa plot
-    """
-    x = np.arange(start=-len(prsa_values) // 2, stop=len(prsa_values) // 2)
-    y = prsa_values
-    y_min = np.min(y) * 0.9
-    y_max = np.max(y) * 1.1
-    plt.ylim(y_min, y_max)
-    plt.scatter(x, y)
-    plt.title("Phase Rectified Signal Average")
-    plt.xlabel("Interval number")
-    plt.ylabel("RR interval (ms)")
-    plt.show()
-
-
-def calculate_rr_dc_ac(
-    signal_df: pd.DataFrame,
-    percentile: float,
-    distance: int | float,
-    show_plot: bool,
-    plot_title: str,
-) -> tuple[float, float, int, int]:
-    """
-    Calculates DC and AC capacity for given signal dataframe,
-    where columns are: 'Values' and 'TimeSteps'.
-    It firstly linearly interpolates signal,
-    then calculates rr intervals and finally calculates DC and AC capacity.
-    :param signal_df: dataframe with signal values and time steps
-    :param percentile: value between 0 and 1, which determines level of cut off
-    :param distance: minimum distance between peaks
-    :param show_plot: if True, it shows plot with peaks
-    :param plot_title: title of plot
-    :return: DC and AC capacity, and size of windows for them
-    """
-
-    if percentile < 0 or percentile >= 1:
-        raise ValueError("Percentile has to be between 0 and 1")
-
-    signal_df.interpolate(inplace=True)
-    cut_off = np.max(signal_df["Values"]) * percentile
-    rr_signal = get_rr_intervals(signal_df, cut_off, distance, show_plot, plot_title)
-
-    prsa__dc, n_windows_dc = calculate(rr_signal, 3, "DC", 0.2)
-    prsa_ac, n_windows_ac = calculate(rr_signal, 3, "AC", 0.2)
-
-    capacity_dc = capacity(prsa__dc)
-    capacity_ac = capacity(prsa_ac)
-
-    return capacity_dc, capacity_ac, n_windows_dc, n_windows_ac
 
 
 def compare_capacities(
