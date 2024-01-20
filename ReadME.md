@@ -19,8 +19,8 @@ The aim of this repository is to provide the code for phase rectified signal ave
 ## Data
 The data used in this project is not public. It comes from healthy volunteers aged 20-25 years old.
 
-## Alghoritm
-The alghoritm of PRSA is based on the following steps:
+## Algorithm
+The algorithm of PRSA is based on the following steps:
 1. Finding peaks in the signal
 
 ![signal_sample](images/signal_sample.png)
