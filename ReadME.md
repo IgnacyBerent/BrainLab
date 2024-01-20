@@ -31,7 +31,7 @@ The alghoritm of PRSA is based on the following steps:
 
 3. Taking windows around anchor points and averaging them
 
-![anchors_windows](imgaes/anchors_windows.png)
+![anchors_windows](images/anchors_windows.png)
 
 4. Calcultaing AC and DC component of the corresponding averaged signal using following formula: AC and DC = [RR(0) + RR(1) - RR(-1) - RR(-2)]/4
 
