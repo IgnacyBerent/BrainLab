@@ -22,10 +22,10 @@ The data used in this project is not public. It comes from healthy volunteers ag
 ## Alghoritm
 The alghoritm of PRSA is based on the following steps:
 1. Finding peaks in the signal
-![signal_sample](images\signal_sample.png)
+![signal_sample](images/signal_sample.png)
 2. Determing anhor points on rr-intervals plot
-![rr_plot](images\rr_plot.png)
+![rr_plot](images/rr_plot.png)
 3. Taking windows around anchor points and averaging them
-![anchor_windows](images\anchor_windows.png)
+![anchor_windows](images/anchor_windows.png)
 4. Calcultaing AC and DC component of the corresponding averaged signal using following formula: AC and DC = [RR(0) + RR(1) - RR(-1) - RR(-2)]/4
-![averaged_signal](images\averaged_signal.png)
+![averaged_signal](images/averaged_signal.png)
