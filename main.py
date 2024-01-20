@@ -5,7 +5,7 @@ import os
 import numpy as np
 import biosppy
 
-WINDOWSIZE = 3
+WINDOWSIZE = 7 # window size for PRSA
 FOLDER_NAME = f'results_L{WINDOWSIZE}' # folder to save results in .csv format
 
 NORMO_DIR = './data_2/normokapnia'
