@@ -11,11 +11,15 @@ from scipy.stats import zscore
 
 
 def rr_intervals(
-    signal: np.array, threshold: float = 0.45, filtered: bool = False
+    signal: np.array,
+    sampling_rate: int = 200,
+    threshold: float = 0.45,
+    filtered: bool = False,
 ) -> np.array:
     """
     Calculates rr intervals from abp signal
     :param signal: 1 dimensional np array of abp signal
+    :param sampling_rate: sampling rate of the signal
     :param threshold: threshold for peak detection from similarity
     :param filtered: if True, it uses default filter on rr interval
     :return: rr intervals
@@ -23,6 +27,7 @@ def rr_intervals(
     peaks, similarity = detect_peaks(signal, threshold=threshold)
     grouped_peaks = group_peaks(peaks)
     rr = np.diff(grouped_peaks)
+    rr *= 1000 / sampling_rate  # convert to milliseconds
 
     if not filtered:
         return rr
