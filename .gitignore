@@ -1,5 +1,6 @@
 # data files
-*data
+*data_1
+*data_2
 *.csv
 
 # idea files
