@@ -56,7 +56,7 @@ def calculate(
     # for each anchor point take values from window of size 2L
     anchor_neighbours = []
     for i in anchor_points:
-        anchor_neighbours.append(x[i - L : i + L + 1] * 1000)
+        anchor_neighbours.append(x[i - L : i + L + 1])
 
     # calculates averages of anchor points for each 'k' index
     X_k = []
