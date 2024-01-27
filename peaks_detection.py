@@ -37,26 +37,55 @@ def rr_intervals(
         return rr_corrected
 
 
+def plot_rr_intervals(rr: np.array, to_seconds: bool = False) -> None:
+    """
+    Plots rr rr
+    :param rr: rr intervals
+    :param to_seconds: if True, x-axis is in seconds, otherwise in milliseconds
+    """
+    plt.figure(figsize=(40, 15))
+    plt.title("RR-intervals", fontsize=24)
+    plt.xlabel("Time (ms)", fontsize=16)
+    plt.ylabel("RR-interval (ms)", fontsize=16)
+
+    x_axis = np.cumsum(rr) / 1000 if to_seconds else np.cumsum(rr)
+
+    plt.plot(
+        x_axis,
+        rr,
+        label="RR-interval",
+        color="#A651D8",
+        linewidth=2,
+    )
+
+
 def plot_abp_vs_rr_intervals(
     df: pd.DataFrame,
     sampfrom: int,
     sampto: int,
     nr_plots: int = 1,
     threshold: float = 0.45,
+    sampling_rate: int = 200,
     filtered: bool = False,
 ):
     peaks, similarity = detect_peaks(df["Values"], threshold=threshold)
     grouped_peaks = group_peaks(peaks)
-    rr = rr_intervals(df["Values"], threshold=threshold, filtered=filtered)
+    rr = np.diff(grouped_peaks)
 
     for start, stop in get_plot_ranges(sampfrom, sampto, nr_plots):
         # plot similarity
         plt.figure(figsize=(40, 20))
 
         plt.title("ABP signal & RR-intervals", fontsize=24)
-        plt.plot(df.index, df["Values"], label="ABP", color="#51A6D8", linewidth=1)
         plt.plot(
-            grouped_peaks,
+            df.index / sampling_rate,
+            df["Values"],
+            label="ABP",
+            color="#51A6D8",
+            linewidth=1,
+        )
+        plt.plot(
+            grouped_peaks / sampling_rate,
             np.repeat(60, grouped_peaks.shape[0]),
             markersize=14,
             label="Found peaks",
@@ -65,13 +94,13 @@ def plot_abp_vs_rr_intervals(
             linestyle="None",
         )
         plt.legend(loc="upper left", fontsize=20)
-        plt.xlabel("Time (milliseconds)", fontsize=16)
+        plt.xlabel("Time (seconds)", fontsize=16)
         plt.ylabel("Amplitude (arbitrary unit)", fontsize=16)
         plt.gca().set_ylim(-30, 80)
 
         ax2 = plt.gca().twinx()
         ax2.plot(
-            np.cumsum(rr) + peaks[0],
+            (np.cumsum(rr) + peaks[0]) / sampling_rate,
             rr,
             label="RR-intervals",
             color="#A651D8",
@@ -81,11 +110,11 @@ def plot_abp_vs_rr_intervals(
             marker="o",
             markersize=18,
         )
-        ax2.set_xlim(start, stop)
+        ax2.set_xlim(start / sampling_rate, stop / sampling_rate)
         ax2.set_ylim(-500, 500)
         ax2.legend(loc="upper right", fontsize=20)
 
-        plt.xlabel("Time (ms)", fontsize=16)
+        plt.xlabel("Time (seconds)", fontsize=16)
         plt.ylabel("RR-interval (ms)", fontsize=16)
 
 
