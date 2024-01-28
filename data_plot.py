@@ -143,6 +143,7 @@ def plot_all_anchors_with_neighbours(
 
     plt.xlabel("Index (relative to anchor point)")
     plt.ylabel("RR-interval (ms)")
+    plt.legend()
     plt.title(title)
     plt.show()
 
