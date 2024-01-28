@@ -117,13 +117,25 @@ def plot_with_anchors(
     plt.legend(fontsize=16)
 
 
-def plot_all_anchors_with_neighbours(anchor_neighbours: np.array, prsa, L: int) -> None:
+def plot_all_anchors_with_neighbours(
+    anchor_neighbours: np.array, prsa: np.array, anchors_type: str, L: int
+) -> None:
     """
     Plots all anchor points with their neighbours
     :param anchor_neighbours: array of anchor points with their neighbours
-    :param L: window size
-    :return: None
+    :param prsa: array of PRSA values
+    :param anchors_type: "AC" or "DC"
+    :param L: signal window, where 2L should be larger than the slowest oscillation
+    :raises ValueError: if type is not "AC" or "DC"
     """
+
+    if anchors_type == "AC":
+        title = "Accelerating anchor points with their neighbours"
+    elif anchors_type == "DC":
+        title = "Decelerating anchor points with their neighbours"
+    else:
+        raise ValueError('Type has to be "AC" or "DC"')
+
     for i in range(len(anchor_neighbours)):
         plt.plot(np.arange(-L, L + 1), anchor_neighbours[i])
 
@@ -131,7 +143,7 @@ def plot_all_anchors_with_neighbours(anchor_neighbours: np.array, prsa, L: int) 
 
     plt.xlabel("Index (relative to anchor point)")
     plt.ylabel("RR-interval (ms)")
-    plt.title("Anchor points with their neighbours")
+    plt.title(title)
     plt.show()
 
 
