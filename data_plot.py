@@ -85,6 +85,7 @@ def plot_with_anchors(
     plt.figure(figsize=(40, 15))
 
     x_axis = np.cumsum(rr) / 1000 if to_seconds else np.cumsum(rr)
+    x_label = "Time (seconds)" if to_seconds else "Time (ms)"
 
     plt.plot(
         x_axis,
@@ -111,7 +112,7 @@ def plot_with_anchors(
     )
 
     plt.title("RR-intervals", fontsize=24)
-    plt.xlabel("Time (ms)", fontsize=16)
+    plt.xlabel(x_label, fontsize=16)
     plt.ylabel("RR-interval (ms)", fontsize=16)
     plt.legend(fontsize=16)
 

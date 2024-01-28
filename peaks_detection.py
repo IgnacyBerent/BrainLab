@@ -43,9 +43,12 @@ def plot_rr_intervals(rr: np.array, to_seconds: bool = False) -> None:
     :param rr: rr intervals
     :param to_seconds: if True, x-axis is in seconds, otherwise in milliseconds
     """
+
+    x_label = "Time (seconds)" if to_seconds else "Time (ms)"
+
     plt.figure(figsize=(40, 15))
     plt.title("RR-intervals", fontsize=24)
-    plt.xlabel("Time (ms)", fontsize=16)
+    plt.xlabel(x_label, fontsize=16)
     plt.ylabel("RR-interval (ms)", fontsize=16)
 
     x_axis = np.cumsum(rr) / 1000 if to_seconds else np.cumsum(rr)
@@ -116,6 +119,54 @@ def plot_abp_vs_rr_intervals(
 
         plt.xlabel("Time (seconds)", fontsize=16)
         plt.ylabel("RR-interval (ms)", fontsize=16)
+
+
+def plot_abp_with_similarity(
+    df: pd.DataFrame,
+    sampfrom: int,
+    sampto: int,
+    nr_plots: int = 1,
+    threshold: float = 0.45,
+):
+    for start, stop in get_plot_ranges(sampfrom, sampto, nr_plots):
+        cond_slice = (df.index >= start) & (df.index < stop)
+        abp_slice = df["Values"][cond_slice]
+
+        # detect peaks
+        peaks, similarity = detect_peaks(abp_slice, threshold=threshold)
+
+        # plot similarity
+        plt.figure(figsize=(40, 20))
+
+        plt.subplot(211)
+        plt.title("ABP signal with found peaks", fontsize=24)
+        plt.plot(abp_slice.index, abp_slice, label="ABP", color="#51A6D8", linewidth=1)
+        plt.plot(
+            peaks,
+            np.repeat(60, peaks.shape[0]),
+            markersize=10,
+            label="peaks",
+            color="orange",
+            marker="o",
+            linestyle="None",
+        )
+        plt.legend(loc="upper right", fontsize=20)
+        plt.xlabel("TimeSteps", fontsize=16)
+        plt.ylabel("Amplitude (arbitrary unit)", fontsize=16)
+
+        plt.subplot(212)
+        plt.title("Similarity plot", fontsize=24)
+        plt.plot(
+            abp_slice.index,
+            similarity,
+            label="Similarity with filter",
+            color="olive",
+            linewidth=1,
+        )
+        plt.plot(threshold * np.ones(len(similarity)), label="Threshold", color="red")
+        plt.legend(loc="upper right", fontsize=20)
+        plt.xlabel("TimeSteps", fontsize=16)
+        plt.ylabel("Similarity (normalized)", fontsize=16)
 
 
 def get_plot_ranges(start=10, end=20, n=5):
