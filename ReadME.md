@@ -47,4 +47,5 @@ The algorithm of PRSA is based on the following steps:
 
 5. Calcultaing AC and DC component of the corresponding averaged signal using following formula: AC and DC = [RR(0) + RR(1) - RR(-1) - RR(-2)]/4
 
-![averaged_signal](images/prsa_signal.png)
+![ac_prsa_signal](images/ac_prsa.png)
+![dc_prsa_signal](images/dc_prsa.png)
