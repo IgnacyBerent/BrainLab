@@ -13,7 +13,7 @@ Aim 3. A robust understanding of how cerebral autoregulation and ANS are interco
 <a href=https://www.linkedin.com/company/automatic-ca-and-ans-using-ml/about/>Project official LinkedIn profile</a>
 
 ## Aim of the repository
-The aim of this repository is to provide the code for phase rectified signal averaging (PRSA) and to applay it to the data from the project AUTOMATIC. The code is divided into two parts:
+The aim of this repository is to provide the code for phase rectified signal averaging (PRSA) and to applay it to the data from the project AUTOMATIC. The code is divided into three parts:
 1. prep.py - specific to our data preprocessing, and displaying its properties
 2. prsa.py - all functions for calculating and displaying PRSA
 3. peaks_detection.py - functions for detecting and displaying found peaks in the signal and creating rr-signal
