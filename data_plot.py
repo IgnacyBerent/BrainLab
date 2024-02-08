@@ -111,10 +111,10 @@ def plot_with_anchors(
         label="DC anchor points",
     )
 
-    plt.title("RR-intervals", fontsize=24)
-    plt.xlabel(x_label, fontsize=16)
-    plt.ylabel("RR-interval (ms)", fontsize=16)
-    plt.legend(fontsize=16)
+    plt.xlabel(x_label, fontsize=35)
+    plt.ylabel("RR-interval (ms)", fontsize=35)
+    plt.legend(fontsize=30)
+    plt.tick_params(axis="both", which="major", labelsize=25)
 
 
 def plot_all_anchors_with_neighbours(
@@ -137,14 +137,13 @@ def plot_all_anchors_with_neighbours(
         raise ValueError('Type has to be "AC" or "DC"')
 
     for i in range(len(anchor_neighbours)):
-        plt.plot(np.arange(-L, L + 1), anchor_neighbours[i])
+        plt.plot(np.arange(-L, L + 1), anchor_neighbours[i], color="black")
 
-    plt.plot(np.arange(-L, L + 1), prsa, label="PRSA", color="black", linewidth=2)
+    plt.plot(np.arange(-L, L + 1), prsa, label="PRSA", color="yellow", linewidth=2)
 
-    plt.xlabel("Index (relative to anchor point)")
-    plt.ylabel("RR-interval (ms)")
-    plt.legend()
-    plt.title(title)
+    plt.xlabel("Index (relative to anchor point)", fontsize=13)
+    plt.ylabel("RR-interval (ms)", fontsize=13)
+    plt.legend(fontsize=11)
     plt.show()
 
 
@@ -155,16 +154,16 @@ def plot_signal(
     sampling_rate: int,
     filtered: bool = False,
 ):
-    y_label = "Amplitude (arbitrary unit)" if filtered else "Amplitude (mmHg)"
+    y_label = "Amplitude (arbitrary unit)" if filtered else "abp (mmHg)"
     title = "Filtered ABP signal" if filtered else "Unfiltered ABP signal"
     plt.figure(figsize=(40, 10))
     duration = (stop - start) / sampling_rate
-    plt.title(title + ", slice of %.1f seconds" % duration, fontsize=24)
     plt.plot(
-        df[start:stop]["TimeSteps"],
+        df[start:stop]["TimeSteps"] / 200,
         df[start:stop]["Values"],
         color="#51A6D8",
         linewidth=1,
     )
-    plt.xlabel("TimeSteps", fontsize=16)
-    plt.ylabel(y_label, fontsize=16)
+    plt.xlabel("Time (seconds)", fontsize=35)
+    plt.ylabel(y_label, fontsize=35)
+    plt.tick_params(axis="both", which="major", labelsize=25)
