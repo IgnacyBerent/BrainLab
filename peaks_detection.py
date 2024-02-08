@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 from scipy.ndimage import label
 from scipy.stats import zscore
+import neurokit2 as nk
 
 
 def rr_intervals(
@@ -35,6 +36,27 @@ def rr_intervals(
         rr_corrected = rr.copy()
         rr_corrected[np.abs(zscore(rr)) > 2] = np.median(rr)
         return rr_corrected
+
+
+def nk_rr_intervals(
+    signal: np.array,
+    sampling_rate: int = 200,
+    mindelay: float = 0.3,
+) -> np.array:
+    """
+    Calculates rr intervals from abp signal using neurokit2 elgendi method
+    :param signal: 1 dimensional np array of abp signal
+    :param sampling_rate: sampling rate of the signal
+    :param mindelay: minimum delay between peaks
+    :return: rr intervals
+    """
+    cleaned_signal = nk.ppg_clean(signal, sampling_rate=sampling_rate, method="elgendi")
+    peaks_info = nk.ppg_findpeaks(
+        cleaned_signal, sampling_rate=sampling_rate, method="elgendi", mindelay=mindelay
+    )
+    peaks = peaks_info["PPG_Peaks"]
+    rr = np.diff(peaks) / sampling_rate * 1000
+    return rr
 
 
 def plot_rr_intervals(rr: np.array, to_seconds: bool = False) -> None:
@@ -69,7 +91,6 @@ def plot_abp_vs_rr_intervals(
     nr_plots: int = 1,
     threshold: float = 0.45,
     sampling_rate: int = 200,
-    filtered: bool = False,
 ):
     peaks, similarity = detect_peaks(df["Values"], threshold=threshold)
     grouped_peaks = group_peaks(peaks)
@@ -182,7 +203,7 @@ def get_plot_ranges(start=10, end=20, n=5):
     """
     distance = end - start
     for i in np.arange(start, end, np.floor(distance / n)):
-        yield (int(i), int(np.minimum(end, np.floor(distance / n) + i)))
+        yield int(i), int(np.minimum(end, np.floor(distance / n) + i))
 
 
 def group_peaks(p, threshold: int = 5) -> np.array:
