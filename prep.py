@@ -59,7 +59,9 @@ def fill_missing_steps(df: pd.DataFrame) -> pd.DataFrame:
     return new_data
 
 
-def read_data(data: str, signal_name: str, sep: str = ",", nrows: int = None) -> pd.DataFrame:
+def read_data(
+    data: str, signal_name: str, sep: str = ",", nrows: int = None
+) -> pd.DataFrame:
     """
     Reads csv data from icm+ program and adjusts it for later use.
     It reads only columns called: DateTime and 'signal_name'
@@ -78,7 +80,7 @@ def read_data(data: str, signal_name: str, sep: str = ",", nrows: int = None) ->
     try:
         df = df[["DateTime", signal_name]]
     except KeyError:
-        raise KeyError(f"Wrong signal name in {signal_name}!")
+        raise KeyError(f"Wrong signal name in {data}!")
 
     if sep != ",":
         try:
@@ -99,7 +101,7 @@ def read_data(data: str, signal_name: str, sep: str = ",", nrows: int = None) ->
 
 
 def find_longest_segments(
-        df: pd.DataFrame, n: int = 1
+    df: pd.DataFrame, n: int = 1
 ) -> List[Tuple[np.array, Tuple[str, str]]]:
     """
     Takes Data Frame with column names 'TimeSteps' and 'Values'.
@@ -115,8 +117,8 @@ def find_longest_segments(
     current_sequence = []
     for val, step in zip(df["Values"], df["TimeSteps"]):
         if not pd.isna(val) or (
-                pd.isna(val)
-                and (not current_sequence or not pd.isna(current_sequence[-1][1]))
+            pd.isna(val)
+            and (not current_sequence or not pd.isna(current_sequence[-1][1]))
         ):
             current_sequence.append((step, val))
         else:
@@ -210,7 +212,9 @@ def files_time_analysis(files: list[pd.DataFrame]):
     print(f"Longest file time duration: {format_time(np.max(files_time))} min")
 
 
-def calculate_fundamental_component(signal: np.array, fs: float, low_f=0.66, high_f=3) -> Tuple[float, float]:
+def calculate_fundamental_component(
+    signal: np.array, fs: float, low_f=0.66, high_f=3
+) -> Tuple[float, float]:
     """
     Calculates fundamental component of signal in given frequency range
     :param signal: signal
