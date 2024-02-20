@@ -62,14 +62,41 @@ def calculate(
     return np.array(X_k), n_windows
 
 
-def capacity(prsa_values: np.array) -> float:
+def capacity_capman(prsa_output: np.array) -> float:
     """
-    Calculates ascending/descending capacity of prsa signal,
+    Calculates ascending|descending (AC|DC) capacity of prsa output signal calculated for window L=3,
     like in https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2886688/
-    :param prsa_values: calculated prsa values for each k
+        The formula for capacity is given by:
+        AC|DC = (RR[0] + RR[1] - RR[-1] - RR[-2]) / 4
+
+    :param prsa_output: calculated prsa values for each k
     :return: capacity
     """
-    return (prsa_values[0] + prsa_values[1] - prsa_values[-1] - prsa_values[-2]) / 4
+    capacity = (prsa_output[0] + prsa_output[1] - prsa_output[-1] - prsa_output[-2]) / 4
+    return capacity
+
+
+def capacity_bauman(prsa_output: np.array, L: int, s: int) -> float:
+    """
+    Calculates ascending|descending (AC|DC) capacity of prsa output signal calculated for any window L
+        The formula for capacity is given by:
+        AC|DC = (1 / (2s)) * Σ(x_AC[i]) from i = L+1 to L+s - (1 / (2s)) * Σ(x_AC[i]) from i = L-s+1 to L,
+        where:
+            - x_AC[i] is the phase-rectified signal for acceleration capacity at point i,
+            - L is the anchor point around which the window is considered,
+            - s is the parameter for summarizing the phase-rectified curves (assumed to be even).
+
+    :param prsa_output: The input phase-rectified signal.
+    :param L: The anchor point around which the AC is calculated.
+    :param s: The summarizing parameter for the phase-rectified curves.
+    :return: The calculated AC value.
+    """
+    hl = L // 2
+    sum_ac_upper = sum(prsa_output[hl : hl + s])
+    sum_ac_lower = sum(prsa_output[hl - s : hl])
+    capacity = (1 / (2 * s)) * (sum_ac_upper - sum_ac_lower)
+
+    return capacity
 
 
 def plot(prsa_values: np.array):
